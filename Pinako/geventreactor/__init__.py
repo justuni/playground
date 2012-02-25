@@ -411,10 +411,10 @@ class GeventReactor(posixbase.PosixReactorBase):
 		self.greenletpool.kill()
 	def getGreenletPool(self):
 		return self.greenletpool
-	def callInGreenlet(self,*args,**kwargs):
-		self.addToGreenletPool(Greenlet.spawn_later(0,*args,**kwargs))
-	def callFromGreenlet(self,*args,**kw):
-		c = DelayedCall(self,self.seconds(),args[0],args[1:],kw,seconds=self.seconds)
+	def callInGreenlet(self,func,*args,**kwargs):
+		self.addToGreenletPool(Greenlet.spawn_later(0,func,*args,**kwargs))
+	def callFromGreenlet(self,func,*args,**kw):
+		c = DelayedCall(self,self.seconds(),func,args,kw,seconds=self.seconds)
 		insort(self._callqueue,c)
 		self.reschedule()
 		return c
