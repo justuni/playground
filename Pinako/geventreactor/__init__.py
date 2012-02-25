@@ -42,24 +42,21 @@ _NO_FILEDESC = error.ConnectionFdescWentAway('Filedescriptor went away')
 
 """These (except for waitFor*) resemble the threading helpers from twisted.internet.threads"""
 
-def deferToGreenletPool(*args,**kwargs):
+def deferToGreenletPool(reactor,pool, func, *args,**kwargs):
 	"""Call function using a greenlet from the given pool and return the result as a Deferred"""
-	reactor = args[0]
-	pool = args[1]
-	func = args[2]
 	d = defer.Deferred()
 	def task():
 		try:
-			reactor.callFromGreenlet(d.callback,func(*args[3:],**kwargs))
+			reactor.callFromGreenlet(d.callback,func(*args,**kwargs))
 		except:
 			reactor.callFromGreenlet(d.errback,failure.Failure())
 	pool.add(Greenlet.spawn_later(0,task))
 	return d
 
-def deferToGreenlet(*args,**kwargs):
+def deferToGreenlet(func,*args,**kwargs):
 	"""Call function using a greenlet and return the result as a Deferred"""
 	from twisted.internet import reactor
-	return deferToGreenletPool(reactor,reactor.getGreenletPool(),*args,**kwargs)
+	return deferToGreenletPool(reactor,reactor.getGreenletPool(), func,*args,**kwargs)
 
 def callMultipleInGreenlet(tupleList):
 	"""Call a list of functions in the same thread"""
@@ -91,18 +88,16 @@ def waitForDeferred(d,result=None):
 	d.addCallbacks(cb,eb)
 	try:
 		return result.get()
-	except failure.Failure,ex:
+	except failure.Failure as ex:
 		ex.raiseException()
 
-def blockingCallFromGreenlet(*args,**kwargs):
+def blockingCallFromGreenlet(reactor,func, *args,**kwargs):
 	"""Call function in reactor greenlet and block current greenlet waiting for the result"""
-	reactor = args[0]
-	func = args[1]
 	result = AsyncResult()
 	def task():
 		try:
-			result.set(func(*args[2:],**kwargs))
-		except Exception,ex:
+			result.set(func(*args,**kwargs))
+		except Exception as ex:
 			result.set_exception(ex)
 	reactor.callFromGreenlet(task)
 	value = result.get()
