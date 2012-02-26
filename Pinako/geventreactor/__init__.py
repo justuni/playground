@@ -76,13 +76,12 @@ def waitForGreenlet(g):
 
 def waitForDeferred(d,result=None):
 	"""Block current greenlet for Deferred, waiting until result is not a Deferred or a failure is encountered"""
+	if not isinstance(d,defer.Deferred):
+		return d
 	if result is None:
 		result = AsyncResult()
 	def cb(res):
-		if isinstance(res,defer.Deferred):
-			waitForDeferred(res,result)
-		else:
-			result.set(res)
+		result.set(res)
 	def eb(res):
 		result.set_exception(res)
 	d.addCallbacks(cb,eb)
