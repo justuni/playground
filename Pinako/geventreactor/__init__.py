@@ -71,7 +71,7 @@ def waitForGreenlet(g):
 			d.callback(g.get())
 		except:
 			d.errback(failure.Failure())
-	g.link(d)
+	g.link(cb)
 	return d
 
 def waitForDeferred(d,result=None):
