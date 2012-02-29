@@ -308,26 +308,24 @@ class GeventReactor(posixbase.PosixReactorBase):
 				try:
 					self._wait = 1
 					gevent.sleep(max(0,delay))
-					self._wait = 0
 				except Reschedule:
 					continue
+				finally:
+					self._wait = 0
+
 				now = seconds()
-				while 1:
+				while callqueue:
+					c = callqueue[0]
+					if c.time > now:
+						break
+					del callqueue[0]
 					try:
-						c = callqueue[0]
-					except IndexError:
-						break
-					if c.time <= now:
-						del callqueue[0]
-						try:
-							c()
-						except GreenletExit:
-							raise
-						except:
-							log.msg('Unexpected error in main loop.')
-							log.err()
-					else:
-						break
+						c()
+					except GreenletExit:
+						raise
+					except:
+						log.msg('Unexpected error in main loop.')
+						log.err()
 		except (GreenletExit,KeyboardInterrupt):
 			pass
 		log.msg('Main loop terminated.')
@@ -432,7 +430,6 @@ class GeventReactor(posixbase.PosixReactorBase):
 	def reschedule(self):
 		if self._wait and len(self._callqueue) > 0 and self._callqueue[0].time < self._wake:
 			gevent.kill(self.greenlet,Reschedule)
-			self._wait = 0
 
 def install():
 	"""Configure the twisted mainloop to be run using geventreactor."""
