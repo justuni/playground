@@ -191,9 +191,9 @@ class DelayedCall(object):
 	def active(self):
 		return not (self.cancelled or self.called)
 	def __le__(self,other):
-		return self.time <= other.time
+		return self.getTime() <= other.getTime()
 	def __lt__(self,other):
-		return self.time < other.time
+		return self.getTime() < other.getTime()
 	def __str__(self):
 		if self._str is not None:
 			return self._str
@@ -208,7 +208,7 @@ class DelayedCall(object):
 			func = None
 		now = self.seconds()
 		L = ['<DelayedCall 0x%x [%ss] called=%s cancelled=%s' % (
-				util.unsignedID(self), self.time - now, self.called,
+				util.unsignedID(self), self.getTime() - now, self.called,
 				self.cancelled)]
 		if func is not None:
 			L.extend((' ', func, '('))
@@ -301,7 +301,7 @@ class GeventReactor(posixbase.PosixReactorBase):
 				self._wait = 0
 				now = seconds()
 				if len(callqueue) > 0:
-					self._wake = delay = callqueue[0].time
+					self._wake = delay = callqueue[0].getTime()
 					delay -= now
 				else:
 					self._wake = now+300
@@ -317,7 +317,7 @@ class GeventReactor(posixbase.PosixReactorBase):
 				now = seconds()
 				while callqueue:
 					c = callqueue[0]
-					if c.time > now:
+					if c.getTime() > now:
 						break
 					del callqueue[0]
 					try:
@@ -431,7 +431,7 @@ class GeventReactor(posixbase.PosixReactorBase):
 		self._callqueue.insert(0,DelayedCall(self,0,gevent.sleep,(),{},seconds=self.seconds))
 		gevent.kill(self.greenlet)
 	def reschedule(self):
-		if self._wait and len(self._callqueue) > 0 and self._callqueue[0].time < self._wake:
+		if self._wait and len(self._callqueue) > 0 and self._callqueue[0].getTime() < self._wake:
 			gevent.kill(self.greenlet,Reschedule)
 
 def install():
