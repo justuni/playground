@@ -393,7 +393,7 @@ class GeventReactor(posixbase.PosixReactorBase):
 			try:
 				self._callqueue.remove(c)
 			except ValueError:
-				return None
+				pass
 		else:
 			c = DelayedCall(self,self.seconds()+args[0],args[1],args[2:],kw,seconds=self.seconds)
 		insort(self._callqueue,c)
