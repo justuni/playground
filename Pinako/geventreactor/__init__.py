@@ -207,7 +207,8 @@ class DelayedCall(object):
 		else:
 			func = None
 		now = self.seconds()
-		L = ['<DelayedCall 0x%x [%ss] called=%s cancelled=%s' % (
+		L = ['<%s 0x%x [%ss] called=%s cancelled=%s' % (
+				self.__class__.__name__,
 				util.unsignedID(self), self.getTime() - now, self.called,
 				self.cancelled)]
 		if func is not None:
