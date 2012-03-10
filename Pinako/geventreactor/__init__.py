@@ -76,7 +76,11 @@ def waitForGreenlet(g):
 	return d
 
 def waitForDeferred(d,result=None):
-	"""Block current greenlet for Deferred, waiting until result is not a Deferred or a failure is encountered"""
+	"""Block current greenlet for Deferred, waiting until the Deferred fires.
+		Errors are re-raised as exceptions.
+		If something that's not a Deferred is passed in, it's returned as-is;
+		this is very useful when migrating away from Twisted.
+	"""
 	if not isinstance(d,defer.Deferred):
 		return d
 	if result is None:
