@@ -32,7 +32,7 @@ from gevent.event import Event, AsyncResult
 from twisted.python import log, failure, reflect, util
 from twisted.python.runtime import seconds as runtimeSeconds
 from twisted.internet import defer, error, posixbase
-from twisted.internet.base import IDelayedCall, ThreadedResolver
+from twisted.internet.base import IDelayedCall, BlockingResolver
 from twisted.internet.threads import _runMultiple
 from twisted.persisted import styles
 from zope.interface import Interface, implements
@@ -127,21 +127,15 @@ class Reschedule(Exception):
 	"""Event for IReactorTime"""
 	pass
 
-class GeventResolver(ThreadedResolver):
-	"""Based on ThreadedResolver, GeventResolver uses gevent to perform name lookups."""
+class GeventResolver(BlockingResolver):
+	def __init__(self,reactor):
+#		BlockingResolver.__init__(self)
+		self.reactor = reactor
+
 	def getHostByName(self,name,timeout=(1,3,11,45)):
-		if timeout:
-			timeoutDelay = sum(timeout)
-		else:
-			timeoutDelay = 60
-		userDeferred = defer.Deferred()
-		lookupDeferred = deferToGreenletPool(
-			self.reactor,self.reactor.getGreenletPool(),socket.gethostbyname,name)
-		cancelCall = self.reactor.callLater(
-			timeoutDelay,self._cleanup,name,lookupDeferred)
-		self._runningQueries[lookupDeferred] = (userDeferred,cancelCall)
-		lookupDeferred.addBoth(self._checkTimeout,name,lookupDeferred)
-		return userDeferred
+		d = deferToGreenletPool(self.reactor,self.reactor.getGreenletPool(),
+			BlockingResolver.getHostByName, self, name,timeout)
+		return d
 
 class DelayedCall(object):
 	"""Delayed call proxy for IReactorTime"""
