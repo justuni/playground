@@ -159,6 +159,8 @@ class DelayedCall(object):
 			del self.func,self.a,self.kw
 	def getTime(self):
 		return self.time
+	def getSeconds(self):
+		return self.getTime() - self.seconds()
 	def cancel(self):
 		if self.cancelled:
 			raise error.AlreadyCancelled
@@ -207,7 +209,7 @@ class DelayedCall(object):
 		now = self.seconds()
 		L = ['<%s 0x%x [%ss] called=%s cancelled=%s' % (
 				self.__class__.__name__,
-				util.unsignedID(self), self.getTime() - now, self.called,
+				util.unsignedID(self), self.getSeconds(), self.called,
 				self.cancelled)]
 		if func is not None:
 			L.extend((' ', func, '('))
