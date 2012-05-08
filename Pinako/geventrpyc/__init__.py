@@ -32,7 +32,7 @@
 from __future__ import absolute_import
 
 import sys, logging
-from gevent import socket, spawn, event, select
+from gevent import socket, spawn, event, select, hub
 try:
 	from gevent import ssl
 except ImportError:
@@ -163,7 +163,7 @@ class GeventConnection(Connection):
 			self._job = spawn(self.serve_all)
 
 	def _cleanup(self, _anyway = True):
-		if self._job is not None and not self._job.ready():
+		if self._job is not None and not self._job.ready() and self._job is not hub.getcurrent():
 			self._job.kill()
 		self._job = None
 		super(GeventConnection,self)._cleanup(_anyway)
@@ -183,27 +183,20 @@ class GeventConnection(Connection):
 	def _dispatch(self, data):
 		"""Always serve in a separate greenlet. Callbacks can arrive at any time."""
 		spawn(super(GeventConnection,self)._dispatch,data)
-
+	
 	def _send_request(self, handler, args, seq=None):
 		if seq is None:
 			seq = next(self._seqcounter)
+		#print >>sys.stderr,"out REQ",seq,args
 		self._send(consts.MSG_REQUEST, seq, (handler, self._box(args)))
 		return seq
 
 	def _recv(self, timeout, wait_for_lock):
-		if not self._recvlock.acquire(wait_for_lock):
-			return None
 		try:
-			try:
-				if self._channel.poll(timeout):
-					data = self._channel.recv()
-				else:
-					data = None
-			except EOFError:
-				self.close()
-				raise
-		finally:
-			self._recvlock.release()
+			data = self._channel.recv()
+		except EOFError:
+			self.close()
+			raise
 		return data
 
 	@staticmethod
