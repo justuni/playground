@@ -147,6 +147,8 @@ class GeventServer(Server):
 		try:
 			while True:
 				self.accept()
+		except EOFError:
+			return
 		finally:
 			self.logger.info('server has terminated')
 			self.close()
