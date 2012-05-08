@@ -236,7 +236,6 @@ class GeventConnection(Connection):
 	def serve_all(self):
 		"""Serves all requests and replies for as long as the connection is 
 		alive."""
-		print >>sys.stderr,"START SERVE",self
 		try:
 			while True:
 				self.serve(None)
@@ -247,7 +246,6 @@ class GeventConnection(Connection):
 			pass
 			
 		finally:
-			print >>sys.stderr,"END SERVE",self
 			self.close()
 
 
